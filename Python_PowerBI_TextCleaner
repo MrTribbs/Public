@@ -1,0 +1,69 @@
+import os
+import re
+import pyperclip
+
+# Clear the terminal output
+os.system('cls' if os.name == 'nt' else 'clear')
+
+# Insert your power bi query in its entierty or in sections between the """ and """
+codeText = """
+    #"Inserted Time" = Table.AddColumn(Source, "Time", each DateTime.Time([logDate]), type time),
+    #"Reordered Columns" = Table.ReorderColumns(#"Inserted Time",{"logDate", "Time", "Setter", "call_from", "call_to", "direction", "result", "duration"}),
+    #"Extracted Date" = Table.TransformColumns(#"Reordered Columns",{{"logDate", DateTime.Date, type date}}),
+    #"Calculated Start of Hour" = Table.TransformColumns(#"Extracted Date",{{"Time", Time.StartOfHour, type time}}),
+    #"Cleaned Text" = Table.TransformColumns(#"Calculated Start of Hour",{{"Setter", Text.Clean, type text}, {"direction", Text.Clean, type text}, {"result", Text.Clean, type text}}),
+    #"Replaced Value" = Table.ReplaceValue(#"Cleaned Text","+","",Replacer.ReplaceText,{"call_from", "call_to"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Replaced Value",{{"duration", type duration}}),
+    #"Calculated Total Minutes" = Table.TransformColumns(#"Changed Type",{{"duration", Duration.TotalMinutes, type number}}),
+    #"Rounded Off" = Table.TransformColumns(#"Calculated Total Minutes",{{"duration", each Number.Round(_, 1), type number}}),
+    #"Renamed Columns" = Table.RenameColumns(#"Rounded Off",{{"logDate", "Date"}, {"duration", "Duration (Mins)"}})
+in
+    #"Renamed Columns"
+"""
+
+# Define the patterns and their replacements
+patterns_replacements = {
+    r'#"(Removed Columns)(\d*)"' : r'RemoveCol\2',
+    r'#"(Expanded )([^"]+)"' : r'Exp\2',
+    r'#"(Added Custom)(\d*)"' : r'AddCol\2',
+    r'#"(Filtered Rows)(\d*)"' : r'Filter\2',
+    r'#"(Renamed Columns)(\d*)"' : r'RenameCol\2',
+    r'#"(Reordered Columns)(\d*)"' : r'Reorder\2',
+    r'#"(Changed Type)(\d*)"' : r'ChangeType\2',
+    r'#"(Sorted Rows)(\d*)"' : r'Sort\2',
+    r'#"(Removed Duplicates)(\d*)"' : r'RemoveDups\2',
+    r'#"(Merged Queries)(\d*)"' : r'MergeQueries\2',
+    r'#"(Grouped Rows)(\d*)"' : r'Group\2',
+    r'#"(Extracted Date)(\d*)"' : r'ExtDate\2',
+    r'#"(Rounded Off)(\d*)"' : r'Round\2',
+    r'#"(Replaced Value)(\d*)"' : r'ReplaceText\2',
+    r'#"(Removed Errors)(\d*)"' : r'RemoveErrors\2',
+    r'#"(Promoted Headers)(\d*)"' : r'PromotHeaders\2',
+    r'#"(Removed Other Columns)(\d*)"' : r'RemoveOCols\2',
+    r'#"(Appended Query)(\d*)"' : r'AppendQuery\2',
+    r'#"(Trimmed Text)(\d*)"' : r'TrimText\2',
+    r'#"(Cleaned Text)(\d*)"' : r'CleanText\2',
+    r'#"(Uppercased Text)(\d*)"' : r'UpperText\2',
+    r'#"(Extracted Text Between Delimiters)(\d*)"' : r'TextBetween\2',
+    r'#"(Added Conditional Column)(\d*)"' : r'CondCol\2',
+    r'#"(Replaced Errors)(\d*)"' : r'ReplaceErrs\2',
+    r'#"(Inserted Date)(\d*)"' : r'InsertDate\2',
+    r'#"(Added Index)(\d*)"' : r'AddIndex\2',
+    r'#"(Calculated Total Minutes)(\d*)"' : r'CalcTMins\2',
+    r'#"(Calculated Start of Hour)(\d*)"' : r'CalcSoH\2',
+    r'#"(Inserted Time)(\d*)"' : r'InsertTime\2'
+}
+
+# Function to apply the replacements
+def replace_patterns(text, patterns_replacements):
+    for pattern, replacement in patterns_replacements.items():
+        text = re.sub(pattern, replacement, text)
+    return text
+
+# Apply the replacements to simplify the code
+simplified_code_text = replace_patterns(codeText, patterns_replacements)
+
+print(simplified_code_text)
+
+# Copy the simplified_code_text to the clipboard
+pyperclip.copy(simplified_code_text)
