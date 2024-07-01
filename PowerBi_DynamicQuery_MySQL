@@ -1,0 +1,25 @@
+// A way to pull mysql data from one query into anoter to make a dynamic query for power bi. Example (refList is a list of IDs pulled from the other query.) 
+
+
+let 
+  refList = 
+    if Type.Is(Value.Type(refList),List.Type) 
+    then Text.Combine({"'",Text.Combine(refList,"','"),"'"}) 
+    else Text.Combine({"'",refList,"'"}), 
+
+  Query = Text.Combine({ " 
+    SELECT
+      id,
+      email
+    FROM
+      leads
+    WHERE 
+      id IN (",refList,")
+    ; 
+  "}), 
+  
+  Source = MySQL.Database("[YOUR DATABASE URL/IP]", "[YOUR DATBASE SCHEMA]",    
+  [CommandTimeout = #duration(0,0,15,0), Query = finalQuery, CreateNavigationProperties = false]) 
+
+in 
+  Source
