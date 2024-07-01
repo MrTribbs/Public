@@ -1,0 +1,59 @@
+Using Google Scripts to Set Up Google Sheets to MySQL Integration 
+
+This example will explain, how to set up a connection that will create a table and populate it with the data from Google spreadsheets. 
+It is assumed that the data is product listings with 2 columns: 
+Product Name
+Product Code
+
+Note: Setting up a connection to a MySQL server requires using JDBC (Java Database Connectivity). 
+
+The following steps are required to set up the Google Sheets to MySQL Integration: 
+
+Step 1: To set up a JDBC connection to Google you must first ensure that several IP ranges are added to your SQL server’s whitelist. 
+  For the list of IP ranges, go to https://www.gstatic.com/ipranges/goog.txt  
+
+Step 2: Obtain the connectivity information for your database. An example would look like this: 
+  Server: sql.mysite.net 
+  Name: sql123 Username: sqlabc 
+  Password: P@$w0rd 
+  Port Number: 3306 
+
+Step 3: Copy the database details.
+
+Step 4: Go to your Google Sheet and open the Script Editor.
+  Open Google Sheet file.
+  Click Tools -> Script Editor.
+
+Step 5: Name the Script Editor file (e.g. “MySQLConnection”). 
+
+Step 6: Apply the database information 
+  A scripting template (Code. gs) will already be loaded. You may delete the content that’s there (Ctrl+A -> Del).
+  Paste the new content (the database info) into the Code. gs.  
+
+Step 7: Modify each line to reflect the format below:
+  var server = “sql.mysite.net”
+  var dbName = “sql123”
+  var username: “sqlabc”
+  var password: “P@$w0rd”
+  var port = 3306
+
+Step 8: Create a function to connect Google Sheets to your MySQL database. An example function would be: 
+  function openConnection() {
+    var url = “jdbc:mysql://” + server + “:” + port + “/” + dbName;
+    var conn = Jdbc.getConnection(url, username, password);
+    }
+
+Step 9: Create a function to write several records from your Google Sheets file to your MySQL database. For example:
+  function writeRecords() {
+    var sheet = SpreadsheetApp.getActiveSheet();
+    var data = sheet.getDataRange().getValues();
+    var stmt = conn.prepareStatement('INSERT INTO products ' + '(productName, productCode) values (?, ?)');
+    for (var i = 0; i < data.length; i++) {
+    stmt.setString('Product name: ' + data[i][0]);
+    stmt.setString('Product number: ' + data[i][1]);
+    stmt.addBatch();
+    }
+  }
+
+Step 10: Add the function to close the connection. 
+  conn.close(); 
