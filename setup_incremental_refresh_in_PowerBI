@@ -1,0 +1,25 @@
+//To set up incremental refresh in Power BI, follow these steps: 
+
+Define Parameters:
+  - Create two parameters: RangeStart and RangeEnd.
+  - Set their data type to Date/Time.
+  - Provide default values (e.g., 1/1/2023 for RangeStart and = DateTime.LocalNow() for RangeEnd).
+
+Modify the Query:
+  - Modify your existing MySQL query to filter data based on these parameters.
+  - Use the RangeStart and RangeEnd parameters in your WHERE clause.
+  - Example:
+      SELECT *
+      FROM YourTable
+      WHERE DateColumn >= @RangeStart AND DateColumn < @RangeEnd
+ 
+Enable Incremental Refresh:
+  - In Power BI Desktop, select the table you want to enable incremental refresh for.
+  - Go to the Modeling tab, then Manage Parameters.
+  - Define the parameters RangeStart and RangeEnd with the appropriate data types.
+  - Go to the table's properties and click on Incremental Refresh.
+  - Enable Incremental Refresh and configure it with the parameters. You can set how many days/months/years of data to store and how often to refresh.
+
+Publish to Power BI Service:
+  - Once the incremental refresh is set up in Power BI Desktop, publish the dataset to the Power BI Service.
+  - Configure the dataset in the Power BI Service to refresh based on your schedule.
