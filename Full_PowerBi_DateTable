@@ -1,0 +1,73 @@
+1)	Date = CALENDAR(date(2024,01,01),today()) 
+  a)	OR: Date = CALENDAR(CALCULATE(MIN('crmLogs'[Date]),ALLNOBLANKROW('crmLogs')),today()) 
+  b)	"yyyy-mm-dd" Format 
+  c)	Mark as a Date Table. 
+
+2)	Year = YEAR([Date]) 
+
+3)	QuarterYear = "Q" & QUARTER([Date]) & "-" & YEAR([Date]) 
+  a)	OR: Quarter = "Q" & QUARTER([Date]) 
+
+4)	MonthYear = FORMAT([Date],"mmm-yyyy") 
+  a)	Sort by MonthYearSort created in step 5. 
+
+5)	MonthYearSort = FORMAT([Date],"yyyymm") 
+
+6)	WeekDay = 
+      SWITCH( 
+        WEEKDAY([Date],2), 
+        1, 3,  // If the weekday is 1 (Monday), adjust it to 3 
+        2, 4,  // If the weekday is 2 (Tuesday), adjust it to 4 
+        3, 5,  // If the weekday is 3 (Wednesday), adjust it to 5 
+        4, 6,  // If the weekday is 4 (Thursday), adjust it to 6 
+        5, 7,  // If the weekday is 5 (Friday), adjust it to 7 
+        6, 1,  // If the weekday is 6 (Saturday), adjust it to 1 
+        7, 2  // If the weekday is 7 (Sunday), adjust it to 2 
+        ) 
+  a)	This makes it to where the week starts on Saturday (1) and Ends on Friday (7). 
+
+7)	WeekofYear = IF(WEEKDAY([Date], 1) < 7 || WEEKDAY(DATE(YEAR([Date]),1,1)) = 7, WEEKNUM([Date], 1), WEEKNUM([Date], 1) +1) 
+  a)	For week starting on Sat through Fri 
+
+8)	StartOfWeek = [Date]-[WeekDay]+1 
+
+9)	EndOfWeek = [StartOfWeek]+6 
+
+10)	WeekYear = [Year]&" - Wk#"&[WeekofYear] 
+
+11)	WeekRank = RANKX(ALL('Date'),[StartOfWeek],,ASC,Dense) 
+
+12)	IsToday = SWITCH(TRUE(), [Date]=TODAY(), "TODAY", [Date]=TODAY()-1, "YESTERDAY", FORMAT([Date],"yyyy-mm-dd"))  
+  a)	Shows "Today" if the date is the current date. 
+  b)	Shows "Yesterday" if the date is yesterday. 
+  c)	If the date is neither "TODAY" or "YESTERDAY" then will display the date in the "yyyy-mm-dd" format. 
+  d)	Used for setting the "default" on a slicer to open on the current date. 
+
+13)	IsWeek = SWITCH(TRUE(), TODAY()>[StartOfWeek] && TODAY()<=[EndOfWeek], "THIS WEEK", TODAY() - 7 > [StartOfWeek] && TODAY() - 7 <= [EndOfWeek], "LAST WEEK", [WeekYear]&"") 
+  a)	Same as 12.c-d to set the "default" for the current week. 
+  b)	[WeekYear]&"" will display the [WeekYear] but without the &"" it throws an error since this is a text column. 
+
+14)	IsMonth = SWITCH(TRUE(), EOMONTH(TODAY(),0) = EOMONTH([Date],0),"THIS MONTH", EOMONTH(TODAY(),-1) = EOMONTH([Date],0),"LAST MONTH",[MonthYear]) 
+  a)	Same as 12/13 to set the "default" for the current month. 
+  b)	",[MonthYear])" end doesn’t need the &"" due to [MonthYear] is already a text column. 
+
+15)	IsYear = SWITCH(TRUE(), year(TODAY())=year([Date]), "THIS YEAR", [Year]&"") 
+  a)	Same as 12/13/14 to set the "default" for the current Year. 
+  b)	",[Year]&"")" end does need the &"" due to [Year] is NOT a text column. 
+
+16)	WorkDay = IF(AND(WEEKDAY([Date],1)<=7,WEEKDAY([Date],1)>1),1,0) 
+  a)	1 = Work day (Mon-Sat) 
+  b)	0 = 0 Weekend (Sun) 
+
+17)	WeekDayName = FORMAT([Date],"DDD") 
+  a)	(Mon, Tue, Wen, …) 
+
+18)	WorkDayOfMonth = IF('Date'[WorkDay]=0, BLANK(), SUMX(FILTER('Date',[MonthYear]=EARLIER('Date'[MonthYear]) && [Date]<=EARLIER([Date])),'Date'[WorkDay])) 
+  a)	Works in conjunction with [WorkDay] displaying only the workdays (Mon-Fri) starting from the 1st of the month (1) (if a weekday and not a weekend). 
+
+19)	WorkDate = IF('Date'[WorkDay]=1,[Date],BLANK()) 
+  a)	Shows the WorkDay Date, and the weekends it shows blank. 
+
+20)	WorkDayRank = IF('Date'[WorkDay]=0, BLANK(), RANKX(ALL('Date'), 'Date'[WorkDate], , ASC, Dense)) 
+  a)	Used to calculate the difference in work days. 
+  b)	Example: 8/1/2022 through 8/31/2022 has 31 days, but if I want to calculate 8/1 through 8/12 (2 weeks) for the "WorkDays" I would use WorkDayRank instead of DateDiff to get 10 workdays, instead of 14 days.
