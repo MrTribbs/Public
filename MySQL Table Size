@@ -1,0 +1,32 @@
+/*
+This query will give you the size of the specified table in megabytes.
+*/
+
+SELECT table_name AS `Table`, 
+       ROUND(((data_length + index_length) / 1024 / 1024), 2) AS `Size in MB`
+FROM information_schema.TABLES
+WHERE table_schema = 'your_database_name'
+      AND table_name = 'your_table_name';
+
+
+/*
+This query will break down the table size into GB, MB, KB, and the remaining bytes. 
+For example, if the table size is 10,362.64 MB, the output will be:
+Size in GB: 10 GB
+Remaining MB: 362 MB
+Remaining KB: 655 KB
+Remaining Bytes: 360 Bytes
+*/
+
+SELECT 
+	table_name AS `Table`, 
+	FLOOR((data_length + index_length) / 1024 / 1024 / 1024) AS `GB`,
+	FLOOR(((data_length + index_length) % (1024 * 1024 * 1024)) / 1024 / 1024) AS `MB`,
+	FLOOR(((data_length + index_length) % (1024 * 1024)) / 1024) AS `KB`,
+	((data_length + index_length) % 1024) AS `Bytes`
+FROM 
+	information_schema.TABLES
+WHERE 
+	table_schema = 'your_database_name'
+	AND table_name = 'your_table_name'
+;
